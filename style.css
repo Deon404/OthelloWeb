@@ -52,6 +52,7 @@ body {
 
 #container .menu button {
     /* Styles for the buttons */
+    display: block ;
     padding: 14px 28px;
     font-size: 1.1rem;
     font-weight: 600;
