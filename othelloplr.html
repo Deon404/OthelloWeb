@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Othello</title>
+    <title>Othello - Player vs Player</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
           integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
@@ -26,7 +26,8 @@
     <ul id="skip-history-list"></ul>
 </div>
 <footer>
-    Developed by @SidonStudio
+    <a style="color: rgb(175, 175, 175); text-decoration: none;"
+       href="https://www.instagram.com/sidonstudio/">Developed by @SidonStudio</a>
 </footer>
 <script>
     // Load settings from localStorage
@@ -120,13 +121,13 @@
 
     };
 
-loadTheme();
+    loadTheme();
 
-window.addEventListener('storage', function (event) {
-    if (event.key === 'color-theme') {
-        loadTheme();
-    }
-});
+    window.addEventListener('storage', function (event) {
+        if (event.key === 'color-theme') {
+            loadTheme();
+        }
+    });
     const placeSound = new Audio('sounds/place.mp3');
     const winSound = new Audio('sounds/win.wav');
 
@@ -276,7 +277,7 @@ window.addEventListener('storage', function (event) {
         board.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 const cellElement = cells[rowIndex][colIndex];
-                const isHint = validMoves.some(([x, y]) => x === rowIndex && y === colIndex) || validMovesPlayer2.some(([x, y]) => x === rowIndex && y === colIndex) ;
+                const isHint = validMoves.some(([x, y]) => x === rowIndex && y === colIndex) || validMovesPlayer2.some(([x, y]) => x === rowIndex && y === colIndex);
 
                 // Update hint styling
                 cellElement.classList.toggle('hint', isHint);
@@ -314,124 +315,4 @@ window.addEventListener('storage', function (event) {
                                             <div class="piece-back ${cell === BLACK ? 'black' : 'white'}"></div>`;
                         }
                     }
-                } else {
-                    if (piece) {
-                        piece.remove();
-                    }
                 }
-            });
-        });
-    }
-
-    function switchPlayer() {
-        currentPlayer = (currentPlayer === HUMAN) ? PLAYER2 : HUMAN;
-        updatePlayerDisplay();
-    }
-
-   function handleMove(row, col) {
-    if (gameOver || animationInProgress || !isValidMove(row, col, currentPlayer)) {
-        return;
-    }
-
-    animationInProgress = true;
-    const { newBoard, flippedPieces } = flipPieces(row, col, currentPlayer);
-    board = newBoard;
-    placeSound.play();
-
-    switchPlayer(); // Switch player *before* rendering to show hints for next player
-    renderBoard(flippedPieces);
-
-    setTimeout(() => {
-        updateScores(board);
-        animationInProgress = false;
-        renderBoard(); // Re-render without specific flipped pieces after the animation
-        if (!checkGameOver()) {  // Only check for auto-skip if game isn't over
-            checkForAutoSkip();
-        }
-
-    }, 700); // Match animation duration
-}
-    function createBoardElements() {
-        const boardElement = document.getElementById('board');
-        boardElement.innerHTML = ''; // Clear any existing content
-        cells = [];
-
-        for (let i = 0; i < BOARD_SIZE; i++) {
-            const row = [];
-            for (let j = 0; j < BOARD_SIZE; j++) {
-                const cellElement = document.createElement('div');
-                cellElement.className = 'cell';
-                cellElement.addEventListener('click', () => handleMove(i, j));
-                boardElement.appendChild(cellElement);
-                row.push(cellElement);
-            }
-            cells.push(row);
-        }
-    }
-
-    function initializeGame() {
-        createBoardElements();
-        updateScores(board);
-        updatePlayerDisplay();
-        renderBoard();
-
-        // Check for auto-skip at the start of the game if the first player has no moves
-        if (currentPlayer === HUMAN) {
-            checkForAutoSkip();
-        }
-    }
-
-    function autoSkipTurn() {
-        const playerColor = currentPlayer === HUMAN ? 'Black' : 'White';
-        skipHistory.push(`${playerColor} skipped their turn.`);
-        updateSkipHistoryDisplay();
-        switchPlayer(); // Switch to the next player
-        renderBoard();
-        checkGameOver();
-        checkForAutoSkip();
-    }
-
-    function checkForAutoSkip() {
-    let validMoves = getValidMoves(currentPlayer);
-
-    if (validMoves.length === 0) {
-        autoSkipTurn();
-    } else if (validMoves.length > 0 && gameOver) {
-         return
-    }
-}
-
-    document.getElementById('toggle-hints').addEventListener('click', () => {
-        showHints = !showHints;
-        document.getElementById('toggle-hints').textContent = showHints ? 'Hide Hints' : 'Show Hints';
-        renderBoard();
-    });
-
-    document.getElementById('restart').addEventListener('click', () => {
-        board = initializeBoard();
-        HUMAN = BLACK;
-        currentPlayer = HUMAN;
-        scores = {black: 2, white: 2};
-        gameOver = false;
-        initializeGame();
-        document.getElementById('game-over').innerHTML = '';
-        skipHistory.length = 0;
-        updateSkipHistoryDisplay();
-
-    });
-
-function updateSkipHistoryDisplay() {
-        const skipHistoryList = document.getElementById('skip-history-list');
-        skipHistoryList.innerHTML = ''; // Clear existing list items
-
-        skipHistory.forEach(skip => {
-            const listItem = document.createElement('li');
-            listItem.textContent = skip;
-            skipHistoryList.appendChild(listItem);
-        });
-    }
-
-    initializeGame();
-</script>
-</body>
-</html>
