@@ -1,0 +1,281 @@
+:root {
+    --background-color-1: #1f372b;
+    --background-color-2: #112719;
+    --text-color: #ffffff;
+    --button-color: #34d399;
+    --button-text-color: #1f2937;
+    --button-hover-color: #10b981;
+    --board-color: #059669;
+    --scoreboard-text-color: #ffffff;
+    --skip-history-heading-color: #ffffff;
+    --skip-history-text-color: #9ca3af;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to right, var(--background-color-1), var(--background-color-2));
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Align items at the top */
+    min-height: 100vh;
+}
+
+/* Styles for the container div */
+#container {
+    position: absolute;
+    text-align: center; /* Center content within the container */
+    padding: 20px;
+    top: 5px;
+    
+   
+}
+
+#container h1 {
+    text-align: center;
+    font-size: 3rem;
+    margin-bottom: 17rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#container .menu {
+    display: flex;
+    justify-content: center; /* Center buttons horizontally */
+    align-items: center; /* Center buttons vertically (optional) */
+    gap: 1rem; /* Add some space between the buttons */
+    margin-bottom: 20px; /* Add some space below the menu */
+    
+}
+
+#container .menu button {
+    /* Styles for the buttons */
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background-color: var(--button-color);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 5px; /* Add some spacing between buttons */
+    
+}
+
+#container .menu button:hover {
+    background-color: var(--button-hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    
+}
+
+
+.score-board {
+    display: flex;
+    justify-content: space-around;
+    width: 80%;
+    margin-bottom: 20px;
+}
+
+.score-board > div {
+    font-size: 1.5rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: var(--scoreboard-text-color); /* Use CSS variable for text color */
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background-color: var(--button-color);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background-color: var(--button-hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(8, 60px);
+    grid-template-rows: repeat(8, 60px);
+    gap: 2px;
+    background-color: #222;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    padding: 4px;
+    margin-bottom: 20px;
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    background-color: var(--board-color);
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.piece {
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease-in-out;
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.piece-front,
+.piece-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.piece-front {
+    background-color: inherit;
+    transform: rotateY(0deg);
+}
+
+.piece-back {
+    transform: rotateY(180deg);
+}
+
+.piece.flipping {
+    transform: rotateY(180deg);
+}
+
+.black .piece-front,
+.black .piece-back {
+    background-color: black;
+    color: white;
+}
+
+.white .piece-front,
+.white .piece-back {
+    background-color: white;
+    color: black;
+}
+
+.hint::before {
+    content: '';
+    display: block;
+    width: 50%;
+    height: 50%;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+}
+
+#game-over {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #e44d26;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+}
+
+footer {
+    position: fixed; /* Make the footer fixed */
+    bottom: 0; /* Stick to the bottom */
+    left: 0; /* Stick to the left edge */
+    width: 100%; /* Full width */
+    padding: 1rem 0;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.9rem;
+    background-color: rgba(83, 83, 83, 0.5);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    z-index: 100; /* Ensure footer is above other content */
+}
+
+/* Style for the current player indicator */
+.current-player {
+    animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}
+
+.game-over {
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+}
+
+#skip-history-box {
+    width: 80%;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: var(--skip-history-text-color); /* CSS variable for text color */
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+#skip-history-box h3 {
+    color: var(--skip-history-heading-color); /* CSS variable for heading color */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+#skip-history-box p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+#logo {
+    position: absolute;
+    width: 100px; /* Adjust the width as needed */
+    height: auto; /* Maintain aspect ratio */
+    left: 30px;
+    top: 30px;
+
+
+}

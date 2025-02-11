@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Othello</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+          integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Player vs Bot</h1>
+<div class="score-board">
+    <div id="black-score">Black : 2</div>
+    <div id="white-score">White : 2</div>
+</div>
+<div class="button-container">
+    <button id="toggle-hints">Hide Hints</button>
+    <button id="restart">Restart Game</button>
+</div>
+<div id="board" class="board"></div>
+<div id="game-over"></div>
+<div id="skip-history-box">
+    <h3>Skip History:</h3>
+</div>
+<footer>
+    Developed by @SidonStudio
+</footer>
+<script>
+    // Load settings from localStorage
+    function applyTheme(themeName) {
+        const theme = colorThemes[themeName];
+        if (theme) {
+            for (const [variable, value] of Object.entries(theme)) {
+                document.documentElement.style.setProperty(`--${variable}`, value);
+            }
+        }
+    }
+
+    function loadTheme() {
+        const theme = localStorage.getItem('color-theme') || 'default';
+        applyTheme(theme);
+    }
+
+    const colorThemes = {
+        default: {
+            'background-color-1': '#1f372b',
+            'background-color-2': '#112719',
+            'text-color': '#ffffff',
+            'button-color': '#34d399',
+            'button-text-color': '#1f2937',
+            'button-hover-color': '#10b981',
+            'board-color': '#059669',
+            'scoreboard-text-color': '#ffffff',
+            'skip-history-heading-color': '#ffffff',
+            'skip-history-text-color': '#9ca3af'
+        },
+        dark: {
+            'background-color-1': '#333333',
+            'background-color-2': '#222222',
+            'text-color': '#eeeeee',
+            'button-color': '#555555',
+            'button-text-color': '#ffffff',
+            'button-hover-color': '#777777',
+            'board-color': '#444444',
+            'scoreboard-text-color': '#eeeeee',
+            'skip-history-heading-color': '#eeeeee',
+            'skip-history-text-color': '#9ca3af'
+        },
+        forest: {
+            'background-color-1': '#38593b',
+            'background-color-2': '#2b3a2d',
+            'text-color': '#d0e8ca',
+            'button-color': '#6b8e23',
+            'button-text-color': '#ffffff',
+            'button-hover-color': '#8fbc5a',
+            'board-color': '#4c6d4f',
+            'scoreboard-text-color': '#d0e8ca',
+            'skip-history-heading-color': '#d0e8ca',
+            'skip-history-text-color': '#9ca3af'
+        },
+        midnight: {
+            'background-color-1': '#0a2463',
+            'background-color-2': '#071948',
+            'text-color': '#c9d6df',
+            'button-color': '#3282b8',
+            'button-text-color': '#ffffff',
+            'button-hover-color': '#5a9ed0',
+            'board-color': '#083073',
+            'scoreboard-text-color': '#c9d6df',
+            'skip-history-heading-color': '#c9d6df',
+            'skip-history-text-color': '#9ca3af'
+        },
+        reddish: {
+            'background-color-1': '#ffbb94',
+            'background-color-2': '#4c1d3d',
+            'text-color': '#c9d6df',
+            'button-color': '#bc586d',
+            'button-text-color': '#4c1d3d',
+            'button-hover-color': '#d37085',
+            'board-color': '#76323f',
+            'scoreboard-text-color': '#c9d6df',
+            'skip-history-heading-color': '#c9d6df',
+            'skip-history-text-color': '#9ca3af'
+        },
+        royal: {
+            'background-color-1': '#e7f5dc',
+            'background-color-2': '#728156',
+            'text-color': '#e7f5dc',
+            'button-color': '#b6c99b',
+            'button-text-color': '#728156',
+            'button-hover-color': '#d0e5b6',
+            'board-color': '#9cb47a',
+            'scoreboard-text-color': '#e7f5dc',
+            'skip-history-heading-color': '#e7f5dc',
+            'skip-history-text-color': '#9ca3af'
+        }
+
+    };
+    loadTheme();
+
+    window.addEventListener('storage', function (event) {
+        if (event.key === 'color-theme') {
+            loadTheme();
+        }
+    });
+    const placeSound = new Audio('sounds/place.mp3');
+    const winSound = new Audio('sounds/win.wav');
+
+    const BOARD_SIZE = 8;
+    const EMPTY = 0, BLACK = 1, WHITE = 2;
+    let HUMAN = BLACK; // player always plays black
+    let BOT = WHITE;
+    let currentPlayer = HUMAN;
+    let scores = {black: 2, white: 2};
+    let showHints = true;
+    let gameOver = false;
+    let board = initializeBoard();
+    let animationInProgress = false;
+    let cells = []; // Store cell elements
+    const skipHistory = [];
+
+    const directions = [
+        [-1, 0], [1, 0], [0, -1], [0, 1],
+        [-1, -1], [-1, 1], [1, -1], [1, 1]
+    ];
+
+    function initializeBoard() {
+        const board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+        board[3][3] = WHITE;
+        board[3][4] = BLACK;
+        board[4][3] = BLACK;
+        board[4][4] = WHITE;
+        return board;
+    }
+
+    function isValidMove(row, col, player) {
+        if (board[row][col] !== EMPTY) return false;
+        for (let [dx, dy] of directions) {
+            let x = row + dx, y = col + dy, foundOpponent = false;
+            while (x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE) {
+                if (board[x][y] === EMPTY) break;
+                if (board[x][y] === player) {
+                    if (foundOpponent) return true;
+                    else break;
+                }
+                foundOpponent = true;
+                x += dx;
+                y += dy;
+            }
+        }
+        return false;
+    }
+
+    function getValidMoves(player) {
+        const validMoves = [];
+        board.forEach((row, rowIndex) =>
+            row.forEach((cell, colIndex) => {
+                if (isValidMove(rowIndex, colIndex, player)) {
+                    validMoves.push([rowIndex, colIndex]);
+                }
+            })
+        );
+        return validMoves;
+    }
+
+    function flipPieces(row, col, player) {
+        const newBoard = board.map(row => [...row]);
+        newBoard[row][col] = player;
+        const flippedPieces = [];
+        const opponent = 3 - player;
+
+        directions.forEach(([dx, dy]) => {
+            let x = row + dx, y = col + dy;
+            const piecesToFlip = [];
+            while (x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE) {
+                if (newBoard[x][y] === EMPTY) break;
+                if (newBoard[x][y] === player) {
+                    if (piecesToFlip.length > 0) {
+                        piecesToFlip.forEach(([fx, fy]) => {
+                            newBoard[fx][fy] = player;
+                            flippedPieces.push({
+                                x: fx,
+                                y: fy,
+                                original: opponent,
+                                new: player
+                            });
+                        });
+                    }
+                    break;
+                }
+                if (newBoard[x][y] === opponent) {
+                    piecesToFlip.push([x, y]);
+                } else {
+                    break;
+                }
+                x += dx;
+                y += dy;
+            }
+        });
+
+        return {newBoard, flippedPieces};
+    }
+
+    function updateScores(newBoard) {
+        let blackCount = 0, whiteCount = 0;
+        newBoard.forEach(row => row.forEach(cell => {
+            if (cell === BLACK) blackCount++;
+            if (cell === WHITE) whiteCount++;
+        }));
+        scores = {black: blackCount, white: whiteCount};
+        document.getElementById('black-score').textContent = `Black : ${scores.black}`;
+        document.getElementById('white-score').textContent = `White : ${scores.white}`;
+    }
+
+    function updatePlayerDisplay() {
+        const blackScore = document.getElementById('black-score');
+        const whiteScore = document.getElementById('white-score');
+
+        blackScore.classList.remove('current-player');
+        whiteScore.classList.remove('current-player');
+
+        if (currentPlayer === HUMAN) {
+            blackScore.classList.add('current-player');
+        } else {
+            whiteScore.classList.add('current-player');
+        }
+    }
+
+    function checkGameOver() {
+        const humanMoves = getValidMoves(HUMAN);
+        const botMoves = getValidMoves(BOT);
+
+        if (humanMoves.length === 0 && botMoves.length === 0) {
+            gameOver = true;
+            winSound.play();
+            document.getElementById('game-over').innerHTML = `
+                <div class="game-over">Game Over! ${
+                scores.black > scores.white ? 'You Win!' :
+                    scores.white > scores.black ? 'Bot Wins!' : 'It\'s a Tie!'
+            }</div>
+            `;
+            return true; // Game is over
+        }
+
+        return false; // Game is not over
+    }
+
+    function renderBoard(flippedPieces = []) {
+        const validMoves = showHints && currentPlayer === HUMAN ? getValidMoves(HUMAN) : [];
+        const currentPlayerColor = currentPlayer === HUMAN ? 'black' : 'white';
+
+        board.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                const cellElement = cells[rowIndex][colIndex];
+                const isHint = validMoves.some(([x, y]) => x === rowIndex && y === colIndex);
+
+                // Update hint styling
+                cellElement.classList.toggle('hint', isHint);
+                if (isHint) {
+                    cellElement.dataset.player = currentPlayerColor;
+                } else {
+                    delete cellElement.dataset.player;
+                }
+
+                // Handle piece updates
+                const piece = cellElement.querySelector('.piece');
+                const flippedPiece = flippedPieces.find(fp => fp.x === rowIndex && fp.y === colIndex);
+
+                if (cell !== EMPTY) {
+                    if (!piece) {
+                        const newPiece = document.createElement('div');
+                        newPiece.className = `piece ${cell === BLACK ? 'black' : 'white'}`;
+                        newPiece.innerHTML = `<div class="piece-front ${cell === BLACK ? 'black' : 'white'}"></div>
+                                            <div class="piece-back ${cell === BLACK ? 'black' : 'white'}"></div>`;
+                        cellElement.appendChild(newPiece);
+
+                    } else {
+                        if (flippedPiece) {
+                            const newColor = flippedPiece.new === BLACK ? 'black' : 'white';
+
+                            piece.classList.add('flipping');
+                            setTimeout(() => {
+                                piece.classList.remove('flipping');
+                                piece.innerHTML = `<div class="piece-front ${newColor}"></div>
+                                            <div class="piece-back ${newColor}"></div>`;
+                                piece.className = `piece ${newColor}`;  // Reset class for correct styling
+                            }, 150); // keep it half of transition time
+                        } else {
+                            piece.innerHTML = `<div class="piece-front ${cell === BLACK ? 'black' : 'white'}"></div>
+                                            <div class="piece-back ${cell === BLACK ? 'black' : 'white'}"></div>`;
+                        }
+                    }
+                } else {
+                    if (piece) {
+                        piece.remove();
+                    }
+                }
+            });
+        });
+    }
+
+    function switchPlayer() {
+        currentPlayer = (currentPlayer === HUMAN) ? BOT : HUMAN;
+        updatePlayerDisplay();
+    }
+
+    function updateSkipHistoryDisplay() {
+        const skipHistoryElement = document.getElementById('skip-history-box');
+        skipHistoryElement.innerHTML = '<h3>Skip History:</h3>'; // Clear existing history
+
+        skipHistory.forEach(skip => {
+            const skipEntry = document.createElement('p');
+            skipEntry.textContent = skip;
+            skipHistoryElement.appendChild(skipEntry);
+        });
+    }
+
+    function autoSkipTurn() {
+    const playerColor = currentPlayer === HUMAN ? 'Black' : 'White';
+    skipHistory.push(`${playerColor} skipped their turn.`);
+    updateSkipHistoryDisplay();
+    switchPlayer(); // Switch to the next player
+    checkGameOver();
+    renderBoard(); // Re-render the board
+    // Check if the new current player is the bot. If it is, trigger the bot's move
+    if (currentPlayer === BOT && !gameOver) {
+        const botMoveDelay = 1500; // Delay in milliseconds (1.5 seconds)
+        setTimeout(() => {
+            botMove();  // Trigger the bot's move after a delay
+        }, botMoveDelay);
+    }
+}
+
+function checkForAutoSkip() {
+    const validMoves = getValidMoves(currentPlayer);
+
+    if (validMoves.length === 0) {
+        autoSkipTurn();
+        return true; // Indicate that a skip occurred
+    }
+
+    return false; // No skip occurred
+}
+
+
+    function handleMove(row, col) {
+    if (gameOver || animationInProgress || currentPlayer !== HUMAN || !isValidMove(row, col, currentPlayer)) return;
+
+    animationInProgress = true;
+    const {newBoard, flippedPieces} = flipPieces(row, col, currentPlayer);
+    board = newBoard;
+    placeSound.play();
+
+    switchPlayer();
+    renderBoard(flippedPieces);
+
+    setTimeout(() => {
+        updateScores(board);
+        animationInProgress = false;  // clear animation progress
+        renderBoard();
+
+        if (!checkGameOver()) {
+            if (!checkForAutoSkip()) { // check autoskip
+                // Add delay here before the bot moves
+                const botMoveDelay = 1000; // Delay in milliseconds (1.5 seconds)
+                setTimeout(() => {
+                    botMove(); // bot move
+                }, botMoveDelay);
+
+
+            }
+        }
+
+    }, 700);
+}
+
+    function createBoardElements() {
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = ''; // Clear any existing content
+        cells = [];
+
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            const row = [];
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cellElement = document.createElement('div');
+                cellElement.className = 'cell';
+                cellElement.addEventListener('click', () => handleMove(i, j));
+                boardElement.appendChild(cellElement);
+                row.push(cellElement);
+            }
+            cells.push(row);
+        }
+    }
+
+    function initializeGame() {
+        createBoardElements();
+        updateScores(board);
+        updatePlayerDisplay();
+        renderBoard();
+
+        // Check for auto-skip at the start of the game if the first player has no moves
+        if (currentPlayer === HUMAN) {
+            checkForAutoSkip();
+        }
+    }
+
+    function botMove() {
+    if (gameOver || animationInProgress) return;
+
+    const validMoves = getValidMoves(BOT);
+    if (validMoves.length > 0) {
+        const [row, col] = validMoves[Math.floor(Math.random() * validMoves.length)];
+
+        animationInProgress = true;
+        const {newBoard, flippedPieces} = flipPieces(row, col, BOT);
+        board = newBoard;
+        placeSound.play();
+
+        switchPlayer();
+        renderBoard(flippedPieces);
+
+        const botDelay = 500;  // Set the delay time in milliseconds (2 seconds in this example)
+
+        new Promise(resolve => setTimeout(resolve, botDelay))
+            .then(() => {
+                updateScores(board);
+                renderBoard();
+                animationInProgress = false;
+                if (!checkGameOver()) {
+                    checkForAutoSkip();
+                }
+            });
+
+    } else {
+        switchPlayer();
+        renderBoard();
+        checkForAutoSkip();
+    }
+}
+
+    document.getElementById('toggle-hints').addEventListener('click', () => {
+        showHints = !showHints;
+        document.getElementById('toggle-hints').textContent = showHints ? 'Hide Hints' : 'Show Hints';
+        renderBoard();
+    });
+
+    document.getElementById('restart').addEventListener('click', () => {
+        board = initializeBoard();
+        HUMAN = BLACK; // Human always plays black
+        BOT = WHITE;
+        currentPlayer = HUMAN;
+        scores = {black: 2, white: 2};
+        gameOver = false;
+        initializeGame();
+        document.getElementById('game-over').innerHTML = '';
+        skipHistory.length = 0;
+        updateSkipHistoryDisplay();
+
+    });
+
+
+    initializeGame();
+</script>
+</body>
+</html>
