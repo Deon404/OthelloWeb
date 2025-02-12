@@ -43,16 +43,14 @@ body {
 
 #container .menu {
     display: flex;
-    justify-content: center; /* Center buttons horizontally */
-    align-items: center; /* Center buttons vertically (optional) */
-    gap: 1rem; /* Add some space between the buttons */
-    margin-bottom: 20px; /* Add some space below the menu */
-    
+    flex-direction: column;  /* Arrange items vertically */
+    align-items: center;     /* Center the buttons horizontally */
+    gap: 1rem;               /* Space between the buttons */
+    margin-bottom: 20px;
 }
 
 #container .menu button {
-    /* Styles for the buttons */
-    display: block ;
+    /* Retain button styling */
     padding: 14px 28px;
     font-size: 1.1rem;
     font-weight: 600;
@@ -63,16 +61,15 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 5px; /* Add some spacing between buttons */
-    
+    margin: 5px; /* Space between buttons */
 }
 
 #container .menu button:hover {
     background-color: var(--button-hover-color);
     transform: translateY(-2px);
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
-    
 }
+
 
 
 .score-board {
